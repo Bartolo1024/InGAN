@@ -220,10 +220,10 @@ class Config:
                                  help='probability for crop swapping to occur')
 
         # GPU
-        self.parser.add_argument('--gpu_id',
+        self.parser.add_argument('--device',
                                  type=int,
-                                 default=0,
-                                 help='gpu id number')
+                                 default='cuda:0',
+                                 help='cpu or gpu with id number')
 
         # Monitoring display frequencies
         self.parser.add_argument(
@@ -304,7 +304,7 @@ class Config:
         self.conf = self.parser.parse_args()
 
         # set gpu ids
-        torch.cuda.set_device(self.conf.gpu_id)
+        # torch.cuda.set_device(self.conf.gpu_id)
 
         # Create results dir if does not exist
         if create_dir_flag:

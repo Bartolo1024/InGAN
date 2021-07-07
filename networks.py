@@ -63,9 +63,9 @@ class GANLoss(nn.Module):
         # for BCEloss, this map is averaged and reduced to a single scalar
         self.loss = nn.MSELoss()
 
-    def forward(self, d_last_layer, is_d_input_real):
+    def forward(self, d_last_layer, is_d_input_real, device=torch.device('cuda')):
         # Determine label map according to whether current input to discriminator is real or fake
-        self.label_tensor = Variable(torch.ones_like(d_last_layer).cuda(),
+        self.label_tensor = Variable(torch.ones_like(d_last_layer).to(device),
                                      requires_grad=False) * is_d_input_real
 
         # Finally return the loss

@@ -181,7 +181,7 @@ def _make_homography_mask(in_mask, target_size, rand_h):
     return out
 
 
-def test_homo(conf, gan, input_tensor, must_divide=8):
+def test_homo(conf, gan, input_tensor, must_divide: int = 8, device: torch.device = torch.device('cuda')):
     shift_range = np.arange(conf.non_rect_shift_range[0],
                             conf.non_rect_shift_range[1],
                             conf.non_rect_shift_range[2])
@@ -204,9 +204,9 @@ def test_homo(conf, gan, input_tensor, must_divide=8):
                     pad_r = np.abs(np.int(np.ceil(sz[3] * shifts[1])))
 
                     in_mask = torch.zeros(sz[0], sz[1], sz[2],
-                                          pad_l + sz[3] + pad_r).cuda()
+                                          pad_l + sz[3] + pad_r).to(device)
                     input_for_regular = torch.zeros(
-                        sz[0], sz[1], sz[2], pad_l + sz[3] + pad_r).cuda()
+                        sz[0], sz[1], sz[2], pad_l + sz[3] + pad_r).to(device)
 
                     in_size = in_mask.shape[2:]
 
