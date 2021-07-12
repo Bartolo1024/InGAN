@@ -255,9 +255,7 @@ def test_homo(conf, gan, input_tensor, must_divide: int = 8, device: torch.devic
 
 
 def main():
-    conf = Config().parse(create_dir_flag=False)
-    conf.name = 'TEST_' + conf.name
-    conf.output_dir_path = util.prepare_result_dir(conf)
+    conf = Config().parse(name_mod_fn=lambda n: n + 'TEST_')
     gan = InGAN(conf)
 
     try:

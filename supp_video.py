@@ -95,9 +95,7 @@ def generate_one_scene(gan, input_tensor, scene_script, frame_shape, center):
 
 
 def generate_full_video(video_script, frame_shape):
-    conf = Config().parse(create_dir_flag=False)
-    conf.name = 'supp_vid'
-    conf.output_dir_path = util.prepare_result_dir(conf)
+    conf = Config().parse(name_mod_fn=lambda n: 'supp_vid')
     n_scenes = len(video_script)
 
     for i, (nameses, scene_script_names,
