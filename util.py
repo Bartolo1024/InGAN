@@ -7,6 +7,7 @@ from time import strftime, localtime
 from shutil import copy
 # from scipy.misc import imresize
 import torch
+from configs import DEFAULT_DEVICE
 
 
 def read_data(conf):
@@ -51,7 +52,7 @@ def tensor2im(image_tensors, imtype=np.uint8):
     return image_numpys
 
 
-def im2tensor(image_numpy, int_flag=False, device=torch.device('cuda')):
+def im2tensor(image_numpy, int_flag=False, device: torch.device = DEFAULT_DEVICE):
     # the int flag indicates whether the input image is integer (and [0,255]) or float ([0,1])
     if int_flag:
         image_numpy /= 255.0
@@ -311,7 +312,7 @@ def prepare_result_dir(conf):
     return conf.output_dir_path
 
 
-def homography_based_on_top_corners_x_shift(rand_h):
+def homography_based_on_top_corners_x_shift(rand_h, device: torch.device = DEFAULT_DEVICE):
     p = np.array(
         [[
             1., 1., -1, 0, 0, 0, -(-1. + rand_h[0]), -(-1. + rand_h[0]),
@@ -325,10 +326,10 @@ def homography_based_on_top_corners_x_shift(rand_h):
     b = np.zeros((9, 1), dtype=np.float32)
     b[8, 0] = 1.
     h = np.dot(np.linalg.inv(p), b)
-    return torch.from_numpy(h).view(3, 3).cuda()
+    return torch.from_numpy(h).view(3, 3).to(device)
 
 
-def homography_grid(theta, size):
+def homography_grid(theta, size, device: torch.device = DEFAULT_DEVICE):
     r"""Generates a 2d flow field, given a batch of homography matrices :attr:`theta`
     Generally used in conjunction with :func:`grid_sample` to
     implement Spatial Transformer Networks.
@@ -349,7 +350,7 @@ def homography_grid(theta, size):
     hxy = torch.ones(n, 3, dtype=torch.float)
     hxy[:, 0] = x.contiguous().view(-1)
     hxy[:, 1] = y.contiguous().view(-1)
-    out = hxy[None, ...].cuda().matmul(theta.transpose(1, 2))
+    out = hxy[None, ...].to(device).matmul(theta.transpose(1, 2))
     # normalize
     out = out[:, :, :2] / out[:, :, 2:]
     return out.view(theta.shape[0], np.int(size[-2] * a), np.int(size[-1] * a),

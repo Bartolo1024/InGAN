@@ -95,9 +95,7 @@ def generate_one_scene(gan, input_tensor, scene_script, frame_shape, center):
 
 
 def generate_full_video(video_script, frame_shape):
-    conf = Config().parse(create_dir_flag=False)
-    conf.name = 'supp_vid'
-    conf.output_dir_path = util.prepare_result_dir(conf)
+    conf = Config().parse(name_mod_fn=lambda n: 'supp_vid')
     n_scenes = len(video_script)
 
     for i, (nameses, scene_script_names,
@@ -187,11 +185,11 @@ def generate_full_video(video_script, frame_shape):
         writer.close()
 
 
-def prepare_geometric(base_sz, scale, geo_shifts):
+def prepare_geometric(base_sz, scale, geo_shifts, device: torch.device = torch.device('cuda')):
     pad_l = np.abs(np.int(np.ceil(base_sz[3] * geo_shifts[0])))
     pad_r = np.abs(np.int(np.ceil(base_sz[3] * geo_shifts[1])))
     in_mask = torch.zeros(base_sz[0], base_sz[1], base_sz[2],
-                          pad_l + base_sz[3] + pad_r).cuda()
+                          pad_l + base_sz[3] + pad_r).to(device)
     in_size = in_mask.shape[2:]
     out_size = (np.uint32(
         np.floor(scale[0] * in_size[0] * 1.0 / MUST_DIVIDE) * MUST_DIVIDE),

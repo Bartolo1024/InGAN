@@ -23,14 +23,15 @@ class InGAN:
     def __init__(self, conf):
         # Acquire configuration
         self.conf = conf
+        self.device = self.conf.device
         self.cur_iter = 0
         self.max_iters = conf.max_iters
 
         # Define input tensor
         self.input_tensor = torch.FloatTensor(1, 3, conf.input_crop_size,
-                                              conf.input_crop_size).cuda()
+                                              conf.input_crop_size).to(self.device)
         self.real_example = torch.FloatTensor(1, 3, conf.output_crop_size,
-                                              conf.output_crop_size).cuda()
+                                              conf.output_crop_size).to(self.device)
 
         # Define networks
         self.G = networks.Generator(conf.G_base_channels, conf.G_num_resblocks,
@@ -49,25 +50,25 @@ class InGAN:
                                             conf.crop_swap_max_size)
 
         # Make all networks run on GPU
-        self.G.cuda()
-        self.D.cuda()
-        self.GAN_loss_layer.cuda()
-        self.Reconstruct_loss.cuda()
-        self.RandCrop.cuda()
-        self.SwapCrops.cuda()
+        self.G.to(self.device)
+        self.D.to(self.device)
+        self.GAN_loss_layer.to(self.device)
+        self.Reconstruct_loss.to(self.device)
+        self.RandCrop.to(self.device)
+        self.SwapCrops.to(self.device)
 
         # Define loss function
         self.criterionGAN = self.GAN_loss_layer.forward
         self.criterionReconstruction = self.Reconstruct_loss.forward
 
         # Keeping track of losses- prepare tensors
-        self.losses_G_gan = torch.FloatTensor(conf.print_freq).cuda()
-        self.losses_D_real = torch.FloatTensor(conf.print_freq).cuda()
-        self.losses_D_fake = torch.FloatTensor(conf.print_freq).cuda()
-        self.losses_G_reconstruct = torch.FloatTensor(conf.print_freq).cuda()
+        self.losses_G_gan = torch.FloatTensor(conf.print_freq).to(self.device)
+        self.losses_D_real = torch.FloatTensor(conf.print_freq).to(self.device)
+        self.losses_D_fake = torch.FloatTensor(conf.print_freq).to(self.device)
+        self.losses_G_reconstruct = torch.FloatTensor(conf.print_freq).to(self.device)
         if self.conf.reconstruct_loss_stop_iter > 0:
             self.losses_D_reconstruct = torch.FloatTensor(
-                conf.print_freq).cuda()
+                conf.print_freq).to(self.device)
 
         # Initialize networks
         self.G.apply(networks.weights_init)

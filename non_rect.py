@@ -3,7 +3,7 @@ from torch.nn import functional as f
 import numpy as np
 
 
-def affine_based_on_top_left_corner_x_shift(rand_affine):
+def affine_based_on_top_left_corner_x_shift(rand_affine, device: torch.device = torch.device('cuda')):
     """
     random affine transformation that only shifts the top-left corner at random along the x direction
     :param sig: amount of random x perturbation
@@ -12,7 +12,7 @@ def affine_based_on_top_left_corner_x_shift(rand_affine):
     aff = np.array([[1., -0.5 * rand_affine, 0.5 * rand_affine], [0, 1., 0]],
                    dtype=np.float32)
 
-    return torch.from_numpy(aff).clone().cuda()
+    return torch.from_numpy(aff).clone().to(device)
 
 
 def apply_resize_and_affine(x, target_size, rand_affine):
@@ -24,7 +24,7 @@ def apply_resize_and_affine(x, target_size, rand_affine):
     return out
 
 
-def homography_grid(theta, size):
+def homography_grid(theta, size, device: torch.device = torch.device('cuda')):
     r"""Generates a 2d flow field, given a batch of homography matrices :attr:`theta`
     Generally used in conjunction with :func:`grid_sample` to
     implement Spatial Transformer Networks.
@@ -43,7 +43,7 @@ def homography_grid(theta, size):
     hxy = torch.ones(n, 3, dtype=torch.float)
     hxy[:, 0] = x.contiguous().view(-1)
     hxy[:, 1] = y.contiguous().view(-1)
-    out = hxy[None, ...].cuda().matmul(theta.transpose(1, 2))
+    out = hxy[None, ...].to(device).matmul(theta.transpose(1, 2))
     # normalize
     out = out[:, :, :2] / out[:, :, 2:]
     return out.view(theta.shape[0], size[-2], size[-1], 2)
@@ -58,7 +58,7 @@ def apply_resize_and_homograhpy(x, target_size, rand_h):
     return out
 
 
-def homography_based_on_top_corners_x_shift(rand_h):
+def homography_based_on_top_corners_x_shift(rand_h, device: torch.device = torch.device('cuda')):
     # play with both top corners
     # p = np.array([[1., 1., -1, 0, 0, 0, -(-1. + rand_h[0]), -(-1. + rand_h[0]), -1. + rand_h[0]],
     #               [0, 0, 0, 1., 1., -1., 1., 1., -1.],
@@ -83,7 +83,7 @@ def homography_based_on_top_corners_x_shift(rand_h):
     b = np.zeros((9, 1), dtype=np.float32)
     b[8, 0] = 1.
     h = np.dot(np.linalg.inv(p), b)
-    return torch.from_numpy(h).view(3, 3).clone().cuda()
+    return torch.from_numpy(h).view(3, 3).clone().to(device)
 
 
 def apply_resize_and_radial(x, target_size, rand_r):
@@ -112,7 +112,7 @@ def test_time():
             nsf = 0.5
             for sc in range(n):
                 csz = [int(s_ * sf ** sc) for s_ in sz_[2:]]
-                cn = torch.randn(sz_[0], sz_[1], csz[0], csz[1]).cuda() * nsf ** (n - sc - 1)
+                cn = torch.randn(sz_[0], sz_[1], csz[0], csz[1]).to(device) * nsf ** (n - sc - 1)
                 pn_ += f.interpolate(cn, sz_[2:], mode='bilinear', align_corners=False)
         return torch.clamp(pn_, -1., 1.)
 
@@ -147,7 +147,7 @@ def test_time():
         return out
 
     orig = util.read_shave_tensorize('/home/bagon/develop/waic/InGAN/rome_s.png', 8)
-    pad = torch.zeros(1, 3, orig.shape[2], orig.shape[3] * 2, dtype=torch.float).cuda()
+    pad = torch.zeros(1, 3, orig.shape[2], orig.shape[3] * 2, dtype=torch.float).to(device)
     hp = orig.shape[3] // 2
     pad[..., hp:-hp] = orig
     in_mask = torch.zeros_like(pad[:, :1, ...])

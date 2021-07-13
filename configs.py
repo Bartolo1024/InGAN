@@ -1,7 +1,31 @@
 import argparse
 import torch
 import os
-from util import prepare_result_dir
+import glob
+import shutil
+from time import strftime, localtime
+
+
+DEFAULT_DEVICE = torch.device('cuda')
+
+
+def prepare_result_dir(conf):
+    # Create results directory
+    conf.output_dir_path += '/' + conf.name + strftime('_%b_%d_%H_%M_%S',
+                                                       localtime())
+    os.makedirs(conf.output_dir_path)
+
+    # Put a copy of all *.py files in results path, to be able to reproduce experimental results
+    if conf.create_code_copy:
+        local_dir = os.path.dirname(__file__)
+        for py_file in glob.glob(local_dir + '/*.py'):
+            shutil.copy(py_file, conf.output_dir_path)
+        if conf.resume:
+            shutil.copy(
+                conf.resume,
+                os.path.join(conf.output_dir_path,
+                             'starting_checkpoint.pth.tar'))
+    return conf.output_dir_path
 
 
 # noinspection PyPep8
@@ -220,10 +244,10 @@ class Config:
                                  help='probability for crop swapping to occur')
 
         # GPU
-        self.parser.add_argument('--gpu_id',
-                                 type=int,
-                                 default=0,
-                                 help='gpu id number')
+        self.parser.add_argument('--device',
+                                 type=str,
+                                 default='cuda:0',
+                                 help='cpu or gpu with id number')
 
         # Monitoring display frequencies
         self.parser.add_argument(
@@ -299,15 +323,18 @@ class Config:
             'when set to true, all .py files are saved to results directory to keep track'
         )
 
-    def parse(self, create_dir_flag=True):
+    def parse(self, create_dir_flag=True, name_mod_fn=lambda n: n):
         # Parse arguments
         self.conf = self.parser.parse_args()
 
-        # set gpu ids
-        torch.cuda.set_device(self.conf.gpu_id)
+        # set device
+        # TODO: bad pattern pass it to functions through the config
+        global DEFAULT_DEVICE
+        DEFAULT_DEVICE = torch.device(self.conf.device)
 
         # Create results dir if does not exist
         if create_dir_flag:
+            self.conf.name = name_mod_fn(self.conf.name)
             self.conf.output_dir_path = prepare_result_dir(self.conf)
 
         return self.conf

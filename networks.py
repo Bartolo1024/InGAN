@@ -4,6 +4,7 @@ import torch.nn.functional as f
 from torch.autograd import Variable
 import numpy as np
 import non_rect
+from configs import DEFAULT_DEVICE
 from util import homography_based_on_top_corners_x_shift, homography_grid
 
 
@@ -65,7 +66,7 @@ class GANLoss(nn.Module):
 
     def forward(self, d_last_layer, is_d_input_real):
         # Determine label map according to whether current input to discriminator is real or fake
-        self.label_tensor = Variable(torch.ones_like(d_last_layer).cuda(),
+        self.label_tensor = Variable(torch.ones_like(d_last_layer).to(self.device),
                                      requires_grad=False) * is_d_input_real
 
         # Finally return the loss
